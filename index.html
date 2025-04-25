@@ -364,38 +364,36 @@
 
       const API_URL =
         "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
+      // Removed duplicate declaration of 'answers'
 
       async function submitQuiz() {
-        const dataToSend = {
-          pergunta1: answers.q1 || "Não respondido",
-          pergunta2: answers.q2 || "Não respondido",
-          pergunta3: answers.q3 || "Não respondido",
-          musica: document.getElementById("answer4").value || "Não informado",
-          tempoLivre:
-            document.getElementById("answer5").value || "Não informado",
-        };
-
         const btn = document.querySelector("#question5 .next-btn");
         btn.textContent = "Enviando...";
         btn.disabled = true;
 
+        const dataToSend = {
+          pergunta1: answers.q1,
+          pergunta2: answers.q2,
+          pergunta3: answers.q3,
+          musica: document.getElementById("answer4").value,
+          tempoLivre: document.getElementById("answer5").value,
+        };
+
         try {
-          // Usando proxy para evitar CORS
-          const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-          const response = await fetch(proxyUrl + API_URL, {
+          // Usando proxy CORS para desenvolvimento
+          const proxyUrl = "https://corsproxy.io/?";
+          const response = await fetch(proxyUrl + encodeURIComponent(API_URL), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dataToSend),
           });
 
-          if (!response.ok) throw new Error("Erro no servidor");
+          if (!response.ok) throw new Error("Erro ao enviar");
           window.location.href = "obrigado.html";
         } catch (error) {
-          btn.textContent = "Erro - Tente Novamente";
-          setTimeout(() => {
-            btn.textContent = "Finalizar Quiz";
-            btn.disabled = false;
-          }, 2000);
+          btn.textContent = "Erro - Clique para tentar novamente";
+          btn.disabled = false;
+          btn.onclick = submitQuiz; // Permite tentar novamente
           console.error("Erro:", error);
         }
       }

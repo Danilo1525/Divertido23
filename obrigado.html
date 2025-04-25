@@ -321,8 +321,7 @@
         const errorMessage = document.getElementById("errorMessage");
 
         if (!feedback) {
-          errorMessage.textContent =
-            "Por favor, digite seu feedback antes de enviar.";
+          errorMessage.textContent = "Por favor, digite seu feedback";
           errorMessage.style.display = "block";
           return;
         }
@@ -332,42 +331,33 @@
         errorMessage.style.display = "none";
 
         try {
-          // Usando proxy CORS para contornar restrições do GitHub Pages
-          const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-          const response = await fetch(proxyUrl + API_URL, {
+          const proxyUrl = "https://corsproxy.io/?";
+          const response = await fetch(proxyUrl + encodeURIComponent(API_URL), {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Requested-With": "XMLHttpRequest", // Necessário para o CORS Anywhere
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               tipo: "feedback",
               texto: feedback,
             }),
           });
 
-          if (!response.ok) throw new Error("Erro ao enviar feedback");
+          if (!response.ok) throw new Error("Erro no servidor");
 
-          // Mostra animação de sucesso
           document.getElementById("feedbackForm").style.display = "none";
           document.getElementById("thankYou").style.display = "block";
-
-          // Adiciona pequeno delay para a animação ficar mais suave
-          setTimeout(() => {
-            document.getElementById("thankYou").style.opacity = "1";
-            document.getElementById("thankYou").style.transform = "scale(1)";
-            createConfetti();
-          }, 50);
+          createConfetti();
         } catch (error) {
-          console.error("Erro:", error);
           sendBtn.textContent = "Enviar Mensagem";
           sendBtn.disabled = false;
-          errorMessage.textContent = error.message.includes("Failed to fetch")
-            ? "Problema de conexão. Verifique sua internet e tente novamente."
-            : "Ocorreu um erro ao enviar seu feedback. Por favor, tente novamente.";
+          errorMessage.textContent = "Erro ao enviar. Tente novamente.";
           errorMessage.style.display = "block";
         }
       }
+
+      // Configura eventos
+      document
+        .getElementById("sendBtn")
+        .addEventListener("click", sendFeedback);
 
       // Configura os event listeners
       document
