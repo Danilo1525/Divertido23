@@ -368,11 +368,15 @@
       // Modifique a função submitQuiz() para:
       async function submitQuiz() {
         const answers = {
-          pergunta1: document.getElementById("hiddenQ1").value,
-          pergunta2: document.getElementById("hiddenQ2").value,
-          pergunta3: document.getElementById("hiddenQ3").value,
-          musica: document.getElementById("answer4").value,
-          tempoLivre: document.getElementById("answer5").value,
+          pergunta1:
+            document.getElementById("hiddenQ1").value || "Não respondido",
+          pergunta2:
+            document.getElementById("hiddenQ2").value || "Não respondido",
+          pergunta3:
+            document.getElementById("hiddenQ3").value || "Não respondido",
+          musica: document.getElementById("answer4").value || "Não informado",
+          tempoLivre:
+            document.getElementById("answer5").value || "Não informado",
         };
 
         try {
@@ -380,17 +384,20 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(answers),
+            redirect: "follow",
           });
 
+          // Verifica se a resposta é válida
+          if (!response.ok) throw new Error("Erro na resposta do servidor");
+
           const result = await response.json();
-          if (result.success) {
-            window.location.href = "obrigado.html";
-          } else {
-            alert("Erro ao salvar: " + (result.error || ""));
-          }
+          if (!result.success)
+            throw new Error(result.error || "Erro desconhecido");
+
+          window.location.href = "obrigado.html";
         } catch (error) {
-          console.error("Erro:", error);
-          alert("Falha na conexão. Verifique o console.");
+          console.error("Erro no envio:", error);
+          alert(`Erro: ${error.message}. Por favor, tente novamente.`);
         }
       }
       // Cria estrelas aleatórias (mesma função original)
