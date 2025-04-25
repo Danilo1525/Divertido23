@@ -381,9 +381,16 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(answers),
           });
-          window.location.href = "obrigado.html";
+
+          const result = await response.json();
+          if (result.success) {
+            window.location.href = "obrigado.html";
+          } else {
+            alert("Erro ao salvar: " + (result.error || ""));
+          }
         } catch (error) {
-          alert("Erro ao enviar! Tente novamente.");
+          console.error("Erro:", error);
+          alert("Falha na conexão. Verifique o console.");
         }
       }
       // Cria estrelas aleatórias (mesma função original)

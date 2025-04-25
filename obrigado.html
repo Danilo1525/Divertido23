@@ -312,19 +312,27 @@
     </div>
 
     <script>
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
       async function sendFeedback() {
         const feedback = document.getElementById("feedback").value;
 
-        await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tipo: "feedback",
-            texto: feedback,
-          }),
-        });
+        try {
+          await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tipo: "feedback",
+              texto: feedback,
+            }),
+          });
 
-        document.getElementById("thankYou").style.display = "block";
+          // Mostra animação de confirmação
+          document.getElementById("feedbackForm").style.display = "none";
+          document.getElementById("thankYou").style.display = "block";
+        } catch (error) {
+          alert("Erro ao enviar feedback. Tente novamente.");
+        }
       }
       // Cria efeito de confete (mesma função original)
       function createConfetti() {
