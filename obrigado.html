@@ -332,9 +332,14 @@
         errorMessage.style.display = "none";
 
         try {
-          const response = await fetch(API_URL, {
+          // Usando proxy CORS para contornar restrições do GitHub Pages
+          const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+          const response = await fetch(proxyUrl + API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest", // Necessário para o CORS Anywhere
+            },
             body: JSON.stringify({
               tipo: "feedback",
               texto: feedback,
@@ -343,20 +348,40 @@
 
           if (!response.ok) throw new Error("Erro ao enviar feedback");
 
+          // Mostra animação de sucesso
           document.getElementById("feedbackForm").style.display = "none";
           document.getElementById("thankYou").style.display = "block";
-          document.getElementById("thankYou").style.opacity = "1";
-          document.getElementById("thankYou").style.transform = "scale(1)";
-          createConfetti();
+
+          // Adiciona pequeno delay para a animação ficar mais suave
+          setTimeout(() => {
+            document.getElementById("thankYou").style.opacity = "1";
+            document.getElementById("thankYou").style.transform = "scale(1)";
+            createConfetti();
+          }, 50);
         } catch (error) {
           console.error("Erro:", error);
           sendBtn.textContent = "Enviar Mensagem";
           sendBtn.disabled = false;
-          errorMessage.textContent =
-            "Ocorreu um erro ao enviar seu feedback. Por favor, tente novamente.";
+          errorMessage.textContent = error.message.includes("Failed to fetch")
+            ? "Problema de conexão. Verifique sua internet e tente novamente."
+            : "Ocorreu um erro ao enviar seu feedback. Por favor, tente novamente.";
           errorMessage.style.display = "block";
         }
       }
+
+      // Configura os event listeners
+      document
+        .getElementById("sendBtn")
+        .addEventListener("click", sendFeedback);
+
+      document
+        .getElementById("feedback")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendFeedback();
+          }
+        });
       // Cria efeito de confete (mesma função original)
       function createConfetti() {
         const colors = ["#8A2BE2", "#9370DB", "#E6E6FA", "#4B0082"];
