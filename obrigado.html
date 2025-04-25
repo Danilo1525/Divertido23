@@ -272,6 +272,134 @@
         }
       }
     </style>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+      } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCgs9VP95T-Iw27ffhYwV7pX2ZSzINk2OE",
+        authDomain: "quiz-cf6eb.firebaseapp.com",
+        projectId: "quiz-cf6eb",
+        storageBucket: "quiz-cf6eb.firebasestorage.app",
+        messagingSenderId: "450637505499",
+        appId: "1:450637505499:web:47bbd4912cd203f69e7dfe",
+        measurementId: "G-THSHXBXPTH",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Cria efeito de confete
+      function createConfetti() {
+        const colors = ["#8A2BE2", "#9370DB", "#E6E6FA", "#4B0082"];
+        const container = document.querySelector(".message-container");
+
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement("div");
+          confetti.className = "confetti";
+          confetti.style.backgroundColor =
+            colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.left = Math.random() * 100 + "%";
+          confetti.style.top = -10 + "px";
+          confetti.style.width = Math.random() * 8 + 5 + "px";
+          confetti.style.height = Math.random() * 8 + 5 + "px";
+          confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
+
+          container.appendChild(confetti);
+
+          const animationDuration = Math.random() * 3 + 2;
+
+          confetti.style.animation = `confettiFall ${animationDuration}s linear forwards`;
+          confetti.style.setProperty(
+            "--end-y",
+            Math.random() * 100 + 100 + "vh"
+          );
+          confetti.style.setProperty(
+            "--end-x",
+            Math.random() * 200 - 100 + "px"
+          );
+          confetti.style.opacity = Math.random() * 0.5 + 0.5;
+
+          setTimeout(() => {
+            confetti.remove();
+          }, animationDuration * 1000);
+        }
+      }
+
+      // Adiciona estilo dinâmico para a animação do confetti
+      const style = document.createElement("style");
+      style.innerHTML = `
+            @keyframes confettiFall {
+                to {
+                    transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+      document.head.appendChild(style);
+
+      // Função para enviar feedback para o Firestore
+      async function sendFeedback() {
+        const feedback = document.getElementById("feedback").value.trim();
+        const sendBtn = document.getElementById("sendBtn");
+        const errorMessage = document.getElementById("errorMessage");
+
+        if (!feedback) {
+          errorMessage.textContent =
+            "Por favor, digite seu feedback antes de enviar.";
+          errorMessage.style.display = "block";
+          return;
+        }
+
+        sendBtn.textContent = "Enviando...";
+        sendBtn.disabled = true;
+        errorMessage.style.display = "none";
+
+        try {
+          // Adiciona o feedback ao Firestore
+          await addDoc(collection(db, "feedbacks"), {
+            texto: feedback,
+            timestamp: new Date(),
+          });
+
+          document.getElementById("feedbackForm").style.display = "none";
+          document.getElementById("thankYou").style.display = "block";
+
+          setTimeout(() => {
+            document.getElementById("thankYou").style.opacity = "1";
+            document.getElementById("thankYou").style.transform = "scale(1)";
+            createConfetti();
+          }, 50);
+        } catch (error) {
+          console.error("Error adding feedback: ", error);
+          sendBtn.textContent = "Enviar Mensagem";
+          sendBtn.disabled = false;
+          errorMessage.textContent = "Erro ao enviar. Tente novamente.";
+          errorMessage.style.display = "block";
+        }
+      }
+
+      // Adiciona o evento de clique ao botão
+      document
+        .getElementById("sendBtn")
+        .addEventListener("click", sendFeedback);
+
+      // Permite enviar com Enter (Shift+Enter para nova linha)
+      document
+        .getElementById("feedback")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendFeedback();
+          }
+        });
+    </script>
   </head>
   <body>
     <div class="message-container">
@@ -310,163 +438,5 @@
         <div style="margin-top: 30px; font-size: 3rem">🌠</div>
       </div>
     </div>
-
-    <script>
-      const API_URL =
-        "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
-
-      async function sendFeedback() {
-        const feedback = document.getElementById("feedback").value.trim();
-        const sendBtn = document.getElementById("sendBtn");
-        const errorMessage = document.getElementById("errorMessage");
-
-        if (!feedback) {
-          errorMessage.textContent = "Por favor, digite seu feedback";
-          errorMessage.style.display = "block";
-          return;
-        }
-
-        sendBtn.textContent = "Enviando...";
-        sendBtn.disabled = true;
-        errorMessage.style.display = "none";
-
-        try {
-          const proxyUrl = "https://corsproxy.io/?";
-          const response = await fetch(proxyUrl + encodeURIComponent(API_URL), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              tipo: "feedback",
-              texto: feedback,
-            }),
-          });
-
-          if (!response.ok) throw new Error("Erro no servidor");
-
-          document.getElementById("feedbackForm").style.display = "none";
-          document.getElementById("thankYou").style.display = "block";
-          createConfetti();
-        } catch (error) {
-          sendBtn.textContent = "Enviar Mensagem";
-          sendBtn.disabled = false;
-          errorMessage.textContent = "Erro ao enviar. Tente novamente.";
-          errorMessage.style.display = "block";
-        }
-      }
-
-      // Configura eventos
-      document
-        .getElementById("sendBtn")
-        .addEventListener("click", sendFeedback);
-
-      // Configura os event listeners
-      document
-        .getElementById("sendBtn")
-        .addEventListener("click", sendFeedback);
-
-      document
-        .getElementById("feedback")
-        .addEventListener("keydown", function (e) {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendFeedback();
-          }
-        });
-      // Cria efeito de confete (mesma função original)
-      function createConfetti() {
-        const colors = ["#8A2BE2", "#9370DB", "#E6E6FA", "#4B0082"];
-        const container = document.querySelector(".message-container");
-
-        for (let i = 0; i < 50; i++) {
-          const confetti = document.createElement("div");
-          confetti.className = "confetti";
-          confetti.style.backgroundColor =
-            colors[Math.floor(Math.random() * colors.length)];
-          confetti.style.left = Math.random() * 100 + "%";
-          confetti.style.top = -10 + "px";
-          confetti.style.width = Math.random() * 8 + 5 + "px";
-          confetti.style.height = Math.random() * 8 + 5 + "px";
-          confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
-
-          container.appendChild(confetti);
-
-          const animationDuration = Math.random() * 3 + 2;
-
-          confetti.style.animation = `confettiFall ${animationDuration}s linear forwards`;
-          confetti.style.setProperty(
-            "--end-y",
-            Math.random() * 100 + 100 + "vh"
-          );
-          confetti.style.setProperty(
-            "--end-x",
-            Math.random() * 200 - 100 + "px"
-          );
-          confetti.style.opacity = Math.random() * 0.5 + 0.5;
-
-          setTimeout(() => {
-            confetti.remove();
-          }, animationDuration * 1000);
-        }
-      }
-
-      // Adiciona estilo dinâmico para a animação do confetti (mesma função original)
-      const style = document.createElement("style");
-      style.innerHTML = `
-            @keyframes confettiFall {
-                to {
-                    transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
-                    opacity: 0;
-                }
-            }
-        `;
-      document.head.appendChild(style);
-
-      // Função para enviar feedback (modificada para não usar Firebase)
-      function sendFeedback() {
-        const feedback = document.getElementById("feedback").value.trim();
-        const sendBtn = document.getElementById("sendBtn");
-        const errorMessage = document.getElementById("errorMessage");
-
-        if (!feedback) {
-          errorMessage.textContent =
-            "Por favor, digite seu feedback antes de enviar.";
-          errorMessage.style.display = "block";
-          return;
-        }
-
-        sendBtn.textContent = "Enviando...";
-        sendBtn.disabled = true;
-        errorMessage.style.display = "none";
-
-        // Simula o envio (substitui o Firebase)
-        setTimeout(() => {
-          console.log("Feedback recebido:", feedback);
-
-          document.getElementById("feedbackForm").style.display = "none";
-          document.getElementById("thankYou").style.display = "block";
-
-          setTimeout(() => {
-            document.getElementById("thankYou").style.opacity = "1";
-            document.getElementById("thankYou").style.transform = "scale(1)";
-            createConfetti();
-          }, 50);
-        }, 1000);
-      }
-
-      // Adiciona o evento de clique ao botão
-      document
-        .getElementById("sendBtn")
-        .addEventListener("click", sendFeedback);
-
-      // Permite enviar com Enter (Shift+Enter para nova linha)
-      document
-        .getElementById("feedback")
-        .addEventListener("keydown", function (e) {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendFeedback();
-          }
-        });
-    </script>
   </body>
 </html>

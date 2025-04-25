@@ -267,8 +267,148 @@
     </style>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCgs9VP95T-Iw27ffhYwV7pX2ZSzINk2OE",
+        authDomain: "quiz-cf6eb.firebaseapp.com",
+        projectId: "quiz-cf6eb",
+        storageBucket: "quiz-cf6eb.firebasestorage.app",
+        messagingSenderId: "450637505499",
+        appId: "1:450637505499:web:47bbd4912cd203f69e7dfe",
+        measurementId: "G-THSHXBXPTH"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      
+      // Armazena as respostas
+      const answers = {
+        q1: null,
+        q2: null,
+        q3: null,
+        q4: null,
+        q5: null,
+      };
+
+      // Cria estrelas aleatórias
+      function createStars() {
+        const starsCount = 100;
+        for (let i = 0; i < starsCount; i++) {
+          const star = document.createElement("div");
+          star.className = Math.random() > 0.9 ? "star large" : "star";
+          star.style.width = Math.random() * 3 + 1 + "px";
+          star.style.height = star.style.width;
+          star.style.left = Math.random() * 100 + "vw";
+          star.style.top = Math.random() * 100 + "vh";
+          star.style.animationDelay = Math.random() * 5 + "s";
+          star.style.animationDuration = Math.random() * 5 + 3 + "s";
+          document.body.appendChild(star);
+        }
+      }
+
+      // Cria meteoros
+      function createMeteor() {
+        const meteor = document.createElement("div");
+        meteor.className = "meteor";
+        meteor.style.left = Math.random() * 100 + "vw";
+        meteor.style.top = Math.random() * 30 + "vh";
+        meteor.style.opacity = Math.random() * 0.5 + 0.5;
+        document.body.appendChild(meteor);
+
+        setTimeout(() => {
+          meteor.remove();
+        }, 3000);
+      }
+
+      // Inicia os elementos celestes
+      createStars();
+      setInterval(createMeteor, 5000);
+
+      // Função para selecionar opção
+      function selectOption(questionNum, option) {
+        answers[`q${questionNum}`] = option;
+
+        // Efeito visual na seleção
+        const buttons = document.querySelectorAll(
+          `#question${questionNum} .option-btn`
+        );
+        buttons.forEach((btn) => {
+          btn.style.transform = "translateY(0)";
+          btn.style.boxShadow = "none";
+          btn.style.backgroundColor = "rgba(138, 43, 226, 0.2)";
+        });
+
+        event.target.style.transform = "translateY(-3px)";
+        event.target.style.boxShadow = "0 8px 20px rgba(138, 43, 226, 0.4)";
+        event.target.style.backgroundColor = "rgba(138, 43, 226, 0.4)";
+
+        setTimeout(() => {
+          nextQuestion(questionNum);
+        }, 400);
+      }
+
+      // Função para próxima pergunta
+      function nextQuestion(currentQuestion) {
+        if (currentQuestion === 4) {
+          answers.q4 = document.getElementById("answer4").value;
+        }
+
+        document
+          .getElementById(`question${currentQuestion}`)
+          .classList.add("hidden");
+        document
+          .getElementById(`question${currentQuestion + 1}`)
+          .classList.remove("hidden");
+        updateProgress(currentQuestion + 1);
+      }
+
+      // Atualiza barra de progresso
+      function updateProgress(currentQuestion) {
+        const progress = (currentQuestion / 5) * 100;
+        document.getElementById("progress").style.width = `${progress}%`;
+
+        if (currentQuestion === 5) {
+          createMeteor();
+        }
+      }
+
+      // Função para enviar quiz para o Firestore
+      async function submitQuiz() {
+        answers.q5 = document.getElementById("answer5").value;
+
+        const btn = document.querySelector("#question5 .next-btn");
+        btn.textContent = "Enviando...";
+        btn.disabled = true;
+
+        try {
+          // Adiciona os dados ao Firestore
+          const docRef = await addDoc(collection(db, "quizResponses"), {
+            pergunta1: answers.q1,
+            pergunta2: answers.q2,
+            pergunta3: answers.q3,
+            musica: answers.q4,
+            tempoLivre: answers.q5,
+            timestamp: new Date()
+          });
+          
+          console.log("Document written with ID: ", docRef.id);
+          window.location.href = "obrigado.html";
+        } catch (error) {
+          console.error("Error adding document: ", error);
+          btn.textContent = "Erro - Clique para tentar novamente";
+          btn.disabled = false;
+          btn.onclick = submitQuiz;
+        }
+      }
+
+      // Torna as funções globais para serem chamadas do HTML
+      window.selectOption = selectOption;
+      window.nextQuestion = nextQuestion;
+      window.submitQuiz = submitQuiz;
+    </script>
   </head>
   <body>
     <!-- Estrelas serão adicionadas via JavaScript -->
@@ -351,152 +491,5 @@
       ></textarea>
       <button class="next-btn" onclick="submitQuiz()">Finalizar Quiz</button>
     </div>
-
-    <script>
-      // Armazena as respostas
-      const answers = {
-        q1: null,
-        q2: null,
-        q3: null,
-        q4: null,
-        q5: null,
-      };
-
-      const API_URL =
-        "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
-      // Removed duplicate declaration of 'answers'
-
-      async function submitQuiz() {
-        const btn = document.querySelector("#question5 .next-btn");
-        btn.textContent = "Enviando...";
-        btn.disabled = true;
-
-        const dataToSend = {
-          pergunta1: answers.q1,
-          pergunta2: answers.q2,
-          pergunta3: answers.q3,
-          musica: document.getElementById("answer4").value,
-          tempoLivre: document.getElementById("answer5").value,
-        };
-
-        try {
-          // Usando proxy CORS para desenvolvimento
-          const proxyUrl = "https://corsproxy.io/?";
-          const response = await fetch(proxyUrl + encodeURIComponent(API_URL), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dataToSend),
-          });
-
-          if (!response.ok) throw new Error("Erro ao enviar");
-          window.location.href = "obrigado.html";
-        } catch (error) {
-          btn.textContent = "Erro - Clique para tentar novamente";
-          btn.disabled = false;
-          btn.onclick = submitQuiz; // Permite tentar novamente
-          console.error("Erro:", error);
-        }
-      }
-      // Cria estrelas aleatórias (mesma função original)
-      function createStars() {
-        const starsCount = 100;
-        for (let i = 0; i < starsCount; i++) {
-          const star = document.createElement("div");
-          star.className = Math.random() > 0.9 ? "star large" : "star";
-          star.style.width = Math.random() * 3 + 1 + "px";
-          star.style.height = star.style.width;
-          star.style.left = Math.random() * 100 + "vw";
-          star.style.top = Math.random() * 100 + "vh";
-          star.style.animationDelay = Math.random() * 5 + "s";
-          star.style.animationDuration = Math.random() * 5 + 3 + "s";
-          document.body.appendChild(star);
-        }
-      }
-
-      // Cria meteoros (mesma função original)
-      function createMeteor() {
-        const meteor = document.createElement("div");
-        meteor.className = "meteor";
-        meteor.style.left = Math.random() * 100 + "vw";
-        meteor.style.top = Math.random() * 30 + "vh";
-        meteor.style.opacity = Math.random() * 0.5 + 0.5;
-        document.body.appendChild(meteor);
-
-        setTimeout(() => {
-          meteor.remove();
-        }, 3000);
-      }
-
-      // Inicia os elementos celestes
-      createStars();
-      setInterval(createMeteor, 5000);
-
-      // Função para selecionar opção (modificada para não usar Firebase)
-      function selectOption(questionNum, option) {
-        answers[`q${questionNum}`] = option;
-
-        // Efeito visual na seleção
-        const buttons = document.querySelectorAll(
-          `#question${questionNum} .option-btn`
-        );
-        buttons.forEach((btn) => {
-          btn.style.transform = "translateY(0)";
-          btn.style.boxShadow = "none";
-          btn.style.backgroundColor = "rgba(138, 43, 226, 0.2)";
-        });
-
-        event.target.style.transform = "translateY(-3px)";
-        event.target.style.boxShadow = "0 8px 20px rgba(138, 43, 226, 0.4)";
-        event.target.style.backgroundColor = "rgba(138, 43, 226, 0.4)";
-
-        setTimeout(() => {
-          nextQuestion(questionNum);
-        }, 400);
-      }
-
-      // Função para próxima pergunta (mesma função original)
-      function nextQuestion(currentQuestion) {
-        if (currentQuestion === 4) {
-          answers.q4 = document.getElementById("answer4").value;
-        }
-
-        document
-          .getElementById(`question${currentQuestion}`)
-          .classList.add("hidden");
-        document
-          .getElementById(`question${currentQuestion + 1}`)
-          .classList.remove("hidden");
-        updateProgress(currentQuestion + 1);
-      }
-
-      // Atualiza barra de progresso (mesma função original)
-      function updateProgress(currentQuestion) {
-        const progress = (currentQuestion / 5) * 100;
-        document.getElementById("progress").style.width = `${progress}%`;
-
-        if (currentQuestion === 5) {
-          createMeteor();
-        }
-      }
-
-      // Função para enviar quiz (modificada para não usar Firebase)
-      function submitQuiz() {
-        answers.q5 = document.getElementById("answer5").value;
-
-        // Efeito visual ao enviar
-        const submitBtn = document.querySelector("#question5 .next-btn");
-        submitBtn.textContent = "Enviando...";
-        submitBtn.style.background = "rgba(147, 112, 219, 0.7)";
-        submitBtn.disabled = true;
-
-        // Simula o envio (substitui o Firebase)
-        setTimeout(() => {
-          console.log("Respostas coletadas:", answers);
-
-          // Redireciona para a página de agradecimento
-          window.location.href = "obrigado.html";
-        }, 1500);
-      }
-    </script>
   </body>
 </html>
