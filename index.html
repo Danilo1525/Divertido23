@@ -353,7 +353,7 @@
     </div>
 
     <script>
-      // Armazena as respostas localmente
+      // Armazena as respostas
       const answers = {
         q1: null,
         q2: null,
@@ -361,38 +361,32 @@
         q4: null,
         q5: null,
       };
-      // No final do arquivo index.html (dentro do <script>)
+
       const API_URL =
         "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
 
-      // Modifique a função submitQuiz() para:
       async function submitQuiz() {
-        const answers = {
-          pergunta1:
-            document.getElementById("hiddenQ1").value || "Não respondido",
-          pergunta2:
-            document.getElementById("hiddenQ2").value || "Não respondido",
-          pergunta3:
-            document.getElementById("hiddenQ3").value || "Não respondido",
-          musica: document.getElementById("answer4").value || "Não informado",
-          tempoLivre:
-            document.getElementById("answer5").value || "Não informado",
+        // Coleta todas as respostas
+        answers.q4 = document.getElementById("answer4").value;
+        answers.q5 = document.getElementById("answer5").value;
+
+        // Prepara os dados para envio
+        const dataToSend = {
+          pergunta1: answers.q1 || "Não respondido",
+          pergunta2: answers.q2 || "Não respondido",
+          pergunta3: answers.q3 || "Não respondido",
+          musica: answers.q4 || "Não informado",
+          tempoLivre: answers.q5 || "Não informado",
         };
 
         try {
           const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(answers),
-            redirect: "follow",
+            body: JSON.stringify(dataToSend),
           });
 
-          // Verifica se a resposta é válida
           if (!response.ok) throw new Error("Erro na resposta do servidor");
-
-          const result = await response.json();
-          if (!result.success)
-            throw new Error(result.error || "Erro desconhecido");
 
           window.location.href = "obrigado.html";
         } catch (error) {

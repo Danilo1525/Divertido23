@@ -314,11 +314,25 @@
     <script>
       const API_URL =
         "https://script.google.com/macros/s/AKfycbx8eTz3Nr-Z-io3qArTYgoNXPgcoubnOB8OFa83Jt7qQkYepnEj4OZ9cCXWklxTgXvZyw/exec";
+
       async function sendFeedback() {
-        const feedback = document.getElementById("feedback").value;
+        const feedback = document.getElementById("feedback").value.trim();
+        const sendBtn = document.getElementById("sendBtn");
+        const errorMessage = document.getElementById("errorMessage");
+
+        if (!feedback) {
+          errorMessage.textContent =
+            "Por favor, digite seu feedback antes de enviar.";
+          errorMessage.style.display = "block";
+          return;
+        }
+
+        sendBtn.textContent = "Enviando...";
+        sendBtn.disabled = true;
+        errorMessage.style.display = "none";
 
         try {
-          await fetch(API_URL, {
+          const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -327,11 +341,20 @@
             }),
           });
 
-          // Mostra animação de confirmação
+          if (!response.ok) throw new Error("Erro ao enviar feedback");
+
           document.getElementById("feedbackForm").style.display = "none";
           document.getElementById("thankYou").style.display = "block";
+          document.getElementById("thankYou").style.opacity = "1";
+          document.getElementById("thankYou").style.transform = "scale(1)";
+          createConfetti();
         } catch (error) {
-          alert("Erro ao enviar feedback. Tente novamente.");
+          console.error("Erro:", error);
+          sendBtn.textContent = "Enviar Mensagem";
+          sendBtn.disabled = false;
+          errorMessage.textContent =
+            "Ocorreu um erro ao enviar seu feedback. Por favor, tente novamente.";
+          errorMessage.style.display = "block";
         }
       }
       // Cria efeito de confete (mesma função original)
